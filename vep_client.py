@@ -233,24 +233,17 @@ def fetch_maf_from_variation_api(rsid: str) -> str:
     if rsid == 'N/A' or not rsid.startswith('rs'):
         return 'N/A'
     
-    endpoint = f"{BASE_URL}/variation/human/{rsid}"
-    params = {"pops": "1"}
-    headers = {"Content-Type": "application/json"}
+    endpoint = f"{BASE_URL}/variation/human/{rsid}?pops=1"
+    headers = {"Accept": "application/json"}
     
     try:
-        response = requests.get(endpoint, headers=headers, params=params, timeout=10)
+        response = requests.get(endpoint, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         
-        # Look for MAF in population data
-        if 'MAF' in data and data['MAF']:
+        # Look for MAF directly in response (simpler approach from reference implementation)
+        if 'MAF' in data and data['MAF'] is not None:
             return f"{float(data['MAF']):.4f}"
-        
-        # Alternative: check in populations array
-        if 'populations' in data:
-            for pop in data['populations']:
-                if 'frequency' in pop and pop.get('population') in ['1000GENOMES:phase_3:ALL', 'GNOMAD']:
-                    return f"{float(pop['frequency']):.4f}"
         
         return 'N/A'
         

@@ -9,63 +9,21 @@ from vcf_parser import (
 )
 
 
-def test_parse_info_single_value():
-    info_str = 'DP=100'
-    result = parse_info(info_str)
-    assert result['DP'] == 100
+def test_parse_info():
+    assert parse_info('DP=100')['DP'] == 100
+    result = parse_info('DP=100;AF=0.5;AC=2')
+    assert result['DP'] == 100 and result['AF'] == 0.5 and result['AC'] == 2
+    assert parse_info('AF=0.5,0.3;DP=100')['AF'] == 0.5  # Takes first value
+    assert parse_info('DB;DP=100')['DB'] is True and parse_info('DB;DP=100')['DP'] == 100
+    assert parse_info('GENE=BRCA2;DP=100')['GENE'] == 'BRCA2'
 
 
-def test_parse_info_multiple_values():
-    info_str = 'DP=100;AF=0.5;AC=2'
-    result = parse_info(info_str)
-    assert result['DP'] == 100
-    assert result['AF'] == 0.5
-    assert result['AC'] == 2
-
-
-def test_parse_info_with_comma_separated_values():
-    info_str = 'AF=0.5,0.3;DP=100'
-    result = parse_info(info_str)
-    assert result['AF'] == 0.5  # Takes first value
-    assert result['DP'] == 100
-
-
-def test_parse_info_boolean_flag():
-    info_str = 'DB;DP=100'
-    result = parse_info(info_str)
-    assert result['DB'] is True
-    assert result['DP'] == 100
-
-
-def test_parse_info_with_string_value():
-    info_str = 'GENE=BRCA2;DP=100'
-    result = parse_info(info_str)
-    assert result['GENE'] == 'BRCA2'
-    assert result['DP'] == 100
-
-
-def test_parse_genotype_basic():
-    format_fields = ['GT', 'DP', 'GQ']
-    genotype_str = '0/1:30:99'
-    result = parse_genotype(genotype_str, format_fields)
-    assert result['GT'] == '0/1'
-    assert result['DP'] == '30'
-    assert result['GQ'] == '99'
-
-
-def test_parse_genotype_homozygous():
-    format_fields = ['GT']
-    genotype_str = '1/1'
-    result = parse_genotype(genotype_str, format_fields)
-    assert result['GT'] == '1/1'
-
-
-def test_parse_genotype_missing_value():
-    format_fields = ['GT', 'DP']
-    genotype_str = './.:.'
-    result = parse_genotype(genotype_str, format_fields)
-    assert result['GT'] == './.'
-    assert result['DP'] == '.'
+def test_parse_genotype():
+    result = parse_genotype('0/1:30:99', ['GT', 'DP', 'GQ'])
+    assert result['GT'] == '0/1' and result['DP'] == '30' and result['GQ'] == '99'
+    assert parse_genotype('1/1', ['GT'])['GT'] == '1/1'
+    result = parse_genotype('./.:.', ['GT', 'DP'])
+    assert result['GT'] == './.' and result['DP'] == '.'
 
 
 def test_parse_variant_line_basic():
@@ -217,25 +175,10 @@ def test_calculate_with_missing_fields():
     assert result['reference_reads'] == 0
 
 
-def test_snp_single_base_substitution():
+def test_determine_variant_type():
     assert determine_variant_type('A', 'T') == "SNP (substitution)"
-
-
-def test_insertion():
     assert determine_variant_type('A', 'AT') == "Insertion"
-
-
-def test_deletion():
     assert determine_variant_type('AT', 'A') == "Deletion"
-
-
-def test_structural_variant():
     assert determine_variant_type('AAA', '<A>') == "Structural variant"
-
-
-def test_cnv_with_equal_length():
     assert determine_variant_type('AAA', '[A]') == "CNV"
-
-
-def test_indel_multi_base():
     assert determine_variant_type('AA', 'TT') == "Indel"

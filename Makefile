@@ -10,11 +10,9 @@ build:
 	docker build -t variant-annotator .
 
 run:
-	@if [ -z "$(VCF)" ]; then \
-		echo "Error: VCF file not specified. Usage: make run VCF=path/to/input.vcf [OUTPUT=path/to/output.tsv] [LIMIT=N]"; \
-		exit 1; \
-	fi
-	@OUTPUT_FILE=$(if $(OUTPUT),$(OUTPUT),output.tsv); \
-	LIMIT_ARG=$(if $(LIMIT),--limit $(LIMIT),); \
-	docker run --rm -v $(PWD):/workspace -v $(PWD):/app variant-annotator /workspace/$(VCF) --output /workspace/$$OUTPUT_FILE $$LIMIT_ARG
+	@test -n "$(VCF)" || (echo "Error: VCF parameter required"; exit 1)
+	docker run --rm -v $(PWD):/workspace -v $(PWD):/app variant-annotator \
+		/workspace/$(VCF) \
+		--output /workspace/$(or $(OUTPUT),output.tsv) \
+		$(if $(LIMIT),--limit $(LIMIT))
 
