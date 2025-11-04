@@ -23,7 +23,8 @@ def create_error_response(error_type: str = 'API_ERROR') -> Dict:
         'biotype': error_type,
         'consequence_terms': error_type,
         'impact': error_type,
-        'strand': error_type
+        'strand': error_type,
+        'maf': 'N/A'
     }
 
 
@@ -35,8 +36,20 @@ def parse_vep_response(data: list) -> Dict:
             'biotype': 'N/A',
             'consequence_terms': 'N/A',
             'impact': 'N/A',
-            'strand': 'N/A'
+            'strand': 'N/A',
+            'maf': 'N/A'
         }
+    
+    # Extract MAF from colocated_variants
+    maf = 'N/A'
+    colocated = data[0].get('colocated_variants', [])
+    if colocated:
+        frequencies = colocated[0].get('frequencies', {})
+        if frequencies:
+            # Get gnomAD or 1000 Genomes frequency
+            maf_value = frequencies.get('gnomad', frequencies.get('1000genomes'))
+            if maf_value:
+                maf = f"{maf_value:.4f}"
     
     consequences = data[0].get('transcript_consequences', [])
     
@@ -48,7 +61,8 @@ def parse_vep_response(data: list) -> Dict:
             'biotype': consequence.get('biotype', 'N/A'),
             'consequence_terms': ', '.join(consequence.get('consequence_terms', [])),
             'impact': consequence.get('impact', 'N/A'),
-            'strand': consequence.get('strand', 'N/A')
+            'strand': consequence.get('strand', 'N/A'),
+            'maf': maf
         }
     
     return {
@@ -57,7 +71,8 @@ def parse_vep_response(data: list) -> Dict:
         'biotype': 'N/A',
         'consequence_terms': 'N/A',
         'impact': 'N/A',
-        'strand': 'N/A'
+        'strand': 'N/A',
+        'maf': maf
     }
 
 
@@ -192,6 +207,17 @@ def parse_batch_vep_response(entry: dict) -> Dict:
     if "error" in entry:
         return create_error_response('API_ERROR')
     
+    # Extract MAF from colocated_variants
+    maf = 'N/A'
+    colocated = entry.get('colocated_variants', [])
+    if colocated:
+        frequencies = colocated[0].get('frequencies', {})
+        if frequencies:
+            # Get gnomAD or 1000 Genomes frequency
+            maf_value = frequencies.get('gnomad', frequencies.get('1000genomes'))
+            if maf_value:
+                maf = f"{maf_value:.4f}"
+    
     consequences = entry.get('transcript_consequences', [])
     
     if consequences:
@@ -202,7 +228,8 @@ def parse_batch_vep_response(entry: dict) -> Dict:
             'biotype': consequence.get('biotype', 'N/A'),
             'consequence_terms': ', '.join(consequence.get('consequence_terms', [])),
             'impact': consequence.get('impact', 'N/A'),
-            'strand': consequence.get('strand', 'N/A')
+            'strand': consequence.get('strand', 'N/A'),
+            'maf': maf
         }
     
     return {
@@ -211,6 +238,7 @@ def parse_batch_vep_response(entry: dict) -> Dict:
         'biotype': 'N/A',
         'consequence_terms': 'N/A',
         'impact': 'N/A',
-        'strand': 'N/A'
+        'strand': 'N/A',
+        'maf': maf
     }
 

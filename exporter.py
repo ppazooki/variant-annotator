@@ -9,7 +9,7 @@ FIELDNAMES = [
     'depth', 'variant_reads', 'reference_reads', 
     'variant_percentage', 'reference_percentage', 'allele_frequency',
     'gene_id', 'gene_symbol', 'biotype', 'consequence_terms', 
-    'impact', 'strand'
+    'impact', 'strand', 'maf'
 ]
 
 
