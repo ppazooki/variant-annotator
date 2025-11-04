@@ -23,7 +23,8 @@ def test_export_single_annotation(tmp_path):
         'biotype': 'protein_coding',
         'consequence_terms': 'missense_variant',
         'impact': 'MODERATE',
-        'strand': 1
+        'strand': 1,
+        'maf': '0.0123'
     }]
     
     output_file = tmp_path / "output.tsv"

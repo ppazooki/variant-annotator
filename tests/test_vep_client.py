@@ -35,12 +35,14 @@ def test_create_error_response():
     result = create_error_response('API_ERROR')
     assert result['gene_id'] == 'API_ERROR'
     assert result['gene_symbol'] == 'API_ERROR'
+    assert result['maf'] == 'N/A'
 
 
 def test_parse_empty_response():
     result = parse_vep_response([])
     assert result['gene_id'] == 'N/A'
     assert result['gene_symbol'] == 'N/A'
+    assert result['maf'] == 'N/A'
     
 def test_parse_valid_response():
     data = [{
@@ -51,17 +53,24 @@ def test_parse_valid_response():
             'consequence_terms': ['missense_variant', 'splice_region_variant'],
             'impact': 'MODERATE',
             'strand': 1
+        }],
+        'colocated_variants': [{
+            'frequencies': {
+                'gnomad': 0.1234
+            }
         }]
     }]
     result = parse_vep_response(data)
     assert result['gene_id'] == 'ENSG00000139618'
     assert result['gene_symbol'] == 'BRCA2'
     assert result['consequence_terms'] == 'missense_variant, splice_region_variant'
+    assert result['maf'] == '0.1234'
     
 def test_parse_response_without_consequences():
     data = [{'transcript_consequences': []}]
     result = parse_vep_response(data)
     assert result['gene_id'] == 'N/A'
+    assert result['maf'] == 'N/A'
 
 
 def test_handle_reference_mismatch_error():
