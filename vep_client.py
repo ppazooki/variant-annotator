@@ -24,6 +24,7 @@ def create_error_response(error_type: str = 'API_ERROR') -> Dict:
         'consequence_terms': error_type,
         'impact': error_type,
         'strand': error_type,
+        'rsid': 'N/A',
         'maf': 'N/A'
     }
 
@@ -37,19 +38,15 @@ def parse_vep_response(data: list) -> Dict:
             'consequence_terms': 'N/A',
             'impact': 'N/A',
             'strand': 'N/A',
+            'rsid': 'N/A',
             'maf': 'N/A'
         }
     
-    # Extract MAF from colocated_variants
-    maf = 'N/A'
+    # Extract rsID from colocated_variants
+    rsid = 'N/A'
     colocated = data[0].get('colocated_variants', [])
     if colocated:
-        frequencies = colocated[0].get('frequencies', {})
-        if frequencies:
-            # Get gnomAD or 1000 Genomes frequency
-            maf_value = frequencies.get('gnomad', frequencies.get('1000genomes'))
-            if maf_value:
-                maf = f"{maf_value:.4f}"
+        rsid = colocated[0].get('id', 'N/A')
     
     consequences = data[0].get('transcript_consequences', [])
     
@@ -62,7 +59,8 @@ def parse_vep_response(data: list) -> Dict:
             'consequence_terms': ', '.join(consequence.get('consequence_terms', [])),
             'impact': consequence.get('impact', 'N/A'),
             'strand': consequence.get('strand', 'N/A'),
-            'maf': maf
+            'rsid': rsid,
+            'maf': 'N/A'  # MAF will be populated by Variation API
         }
     
     return {
@@ -72,7 +70,8 @@ def parse_vep_response(data: list) -> Dict:
         'consequence_terms': 'N/A',
         'impact': 'N/A',
         'strand': 'N/A',
-        'maf': maf
+        'rsid': rsid,
+        'maf': 'N/A'  # MAF will be populated by Variation API
     }
 
 
@@ -104,7 +103,6 @@ def get_variant_effects(
         response = requests.get(endpoint, headers=headers, params=params, timeout=10)
         data = response.json()
         
-        # Handle API error responses
         if "error" in data:
             return handle_vep_error(data["error"], variant_region, chrom, pos, ref, alt)
         
@@ -207,16 +205,11 @@ def parse_batch_vep_response(entry: dict) -> Dict:
     if "error" in entry:
         return create_error_response('API_ERROR')
     
-    # Extract MAF from colocated_variants
-    maf = 'N/A'
+    # Extract rsID from colocated_variants
+    rsid = 'N/A'
     colocated = entry.get('colocated_variants', [])
     if colocated:
-        frequencies = colocated[0].get('frequencies', {})
-        if frequencies:
-            # Get gnomAD or 1000 Genomes frequency
-            maf_value = frequencies.get('gnomad', frequencies.get('1000genomes'))
-            if maf_value:
-                maf = f"{maf_value:.4f}"
+        rsid = colocated[0].get('id', 'N/A')
     
     consequences = entry.get('transcript_consequences', [])
     
@@ -229,7 +222,8 @@ def parse_batch_vep_response(entry: dict) -> Dict:
             'consequence_terms': ', '.join(consequence.get('consequence_terms', [])),
             'impact': consequence.get('impact', 'N/A'),
             'strand': consequence.get('strand', 'N/A'),
-            'maf': maf
+            'rsid': rsid,
+            'maf': 'N/A'  # MAF will be populated by Variation API
         }
     
     return {
@@ -239,6 +233,61 @@ def parse_batch_vep_response(entry: dict) -> Dict:
         'consequence_terms': 'N/A',
         'impact': 'N/A',
         'strand': 'N/A',
-        'maf': maf
+        'rsid': rsid,
+        'maf': 'N/A'  # MAF will be populated by Variation API
     }
 
+
+def fetch_maf_from_variation_api(rsid: str) -> str:
+    if rsid == 'N/A' or not rsid.startswith('rs'):
+        return 'N/A'
+    
+    endpoint = f"{BASE_URL}/variation/human/{rsid}"
+    params = {"pops": "1"}
+    headers = {"Content-Type": "application/json"}
+    
+    try:
+        response = requests.get(endpoint, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Look for MAF in population data
+        if 'MAF' in data and data['MAF']:
+            return f"{float(data['MAF']):.4f}"
+        
+        # Alternative: check in populations array
+        if 'populations' in data:
+            for pop in data['populations']:
+                if 'frequency' in pop and pop.get('population') in ['1000GENOMES:phase_3:ALL', 'GNOMAD']:
+                    return f"{float(pop['frequency']):.4f}"
+        
+        return 'N/A'
+        
+    except Exception as e:
+        print(f"Warning: Failed to fetch MAF for {rsid}: {e}", file=sys.stderr)
+        return 'N/A'
+
+
+def enrich_with_population_maf(annotations: List[Dict]) -> List[Dict]:
+    variants_with_rsid = [(i, ann) for i, ann in enumerate(annotations) 
+                          if ann.get('rsid') and ann.get('rsid') != 'N/A']
+    
+    if not variants_with_rsid:
+        return annotations
+    
+    print(f"\nFetching MAF from Variation API for {len(variants_with_rsid)} variants with rsIDs...", file=sys.stderr)
+    
+    for idx, (ann_idx, ann) in enumerate(variants_with_rsid):
+        # Skip if MAF already populated
+        if ann.get('maf') != 'N/A':
+            continue
+        
+        rsid = ann['rsid']
+        maf = fetch_maf_from_variation_api(rsid)
+        
+        if maf != 'N/A':
+            annotations[ann_idx]['maf'] = maf
+            if (idx + 1) % 10 == 0:
+                print(f"  Processed {idx + 1}/{len(variants_with_rsid)} variants...")
+        
+    return annotations

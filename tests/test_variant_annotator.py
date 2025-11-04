@@ -1,5 +1,5 @@
 import sys
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from variant_annotator import main
 
 
@@ -15,8 +15,9 @@ def test_main_with_basic_arguments(tmp_path):
     tsv_file = tmp_path / "output.tsv"
     
     test_args = ['variant_annotator.py', str(vcf_file), '--output', str(tsv_file), '--limit', '0']
-    with patch.object(sys, 'argv', test_args):
-        main()
+    with patch('annotator.enrich_with_population_maf', side_effect=lambda x: x):
+        with patch.object(sys, 'argv', test_args):
+            main()
     
     # Check that output file exists (even if empty due to limit=0)
     assert tsv_file.exists()
@@ -33,8 +34,9 @@ def test_main_with_limit(tmp_path):
     tsv_file = tmp_path / "output.tsv"
     
     test_args = ['variant_annotator.py', str(vcf_file), '--output', str(tsv_file), '--limit', '5']
-    with patch.object(sys, 'argv', test_args):
-        main()
+    with patch('annotator.enrich_with_population_maf', side_effect=lambda x: x):
+        with patch.object(sys, 'argv', test_args):
+            main()
     
     # Verify output file was created
     assert tsv_file.exists()

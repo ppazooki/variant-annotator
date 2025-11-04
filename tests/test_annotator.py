@@ -19,10 +19,13 @@ def test_annotate_vcf_basic(tmp_path, mocker):
         'biotype': 'protein_coding',
         'consequence_terms': 'missense_variant',
         'impact': 'MODERATE',
-        'strand': 1
+        'strand': 1,
+        'rsid': 'N/A',
+        'maf': 'N/A'
     }]
     
     mocker.patch('annotator.get_variant_effects_batch', return_value=mock_batch_result)
+    mocker.patch('annotator.enrich_with_population_maf', side_effect=lambda x: x)
     
     annotations = annotate_vcf(str(vcf_file))
     
@@ -50,11 +53,12 @@ def test_annotate_vcf_with_limit(tmp_path, mocker):
     )
     
     mock_batch_results = [
-        {'gene_id': 'ENSG1', 'gene_symbol': 'GENE1', 'biotype': 'pc', 'consequence_terms': 'synonymous', 'impact': 'LOW', 'strand': 1},
-        {'gene_id': 'ENSG2', 'gene_symbol': 'GENE2', 'biotype': 'pc', 'consequence_terms': 'synonymous', 'impact': 'LOW', 'strand': 1}
+        {'gene_id': 'ENSG1', 'gene_symbol': 'GENE1', 'biotype': 'pc', 'consequence_terms': 'synonymous', 'impact': 'LOW', 'strand': 1, 'rsid': 'N/A', 'maf': 'N/A'},
+        {'gene_id': 'ENSG2', 'gene_symbol': 'GENE2', 'biotype': 'pc', 'consequence_terms': 'synonymous', 'impact': 'LOW', 'strand': 1, 'rsid': 'N/A', 'maf': 'N/A'}
     ]
     
     mocker.patch('annotator.get_variant_effects_batch', return_value=mock_batch_results)
+    mocker.patch('annotator.enrich_with_population_maf', side_effect=lambda x: x)
     
     annotations = annotate_vcf(str(vcf_file), limit=2)
     
@@ -76,10 +80,13 @@ def test_annotate_vcf_combines_variant_data(tmp_path, mocker):
         'biotype': 'protein_coding',
         'consequence_terms': 'stop_gained',
         'impact': 'HIGH',
-        'strand': -1
+        'strand': -1,
+        'rsid': 'N/A',
+        'maf': 'N/A'
     }]
     
     mocker.patch('annotator.get_variant_effects_batch', return_value=mock_batch_result)
+    mocker.patch('annotator.enrich_with_population_maf', side_effect=lambda x: x)
     
     annotations = annotate_vcf(str(vcf_file))
     
@@ -125,6 +132,7 @@ def test_export_single_annotation(tmp_path):
         'consequence_terms': 'missense_variant',
         'impact': 'MODERATE',
         'strand': 1,
+        'rsid': 'N/A',
         'maf': '0.0123'
     }]
     
