@@ -4,6 +4,4 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
-/*.vcf
-/*.tsv
 coverage.xml
