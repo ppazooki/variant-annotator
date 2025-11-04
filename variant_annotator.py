@@ -5,6 +5,7 @@ from annotator import annotate_vcf, export_to_tsv
 
 
 def main():
+    """Main entry point for the variant annotator CLI."""
     parser = argparse.ArgumentParser(
         description="Annotate variants from a VCF file",
         formatter_class=argparse.RawDescriptionHelpFormatter

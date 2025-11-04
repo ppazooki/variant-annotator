@@ -2,6 +2,7 @@ from typing import Dict, List, Iterator, Tuple
 
 
 def parse_info(info_str: str) -> Dict:
+    """Parse VCF INFO field string into a dictionary."""
     info_dict = {}
     for item in info_str.split(';'):
         if '=' in item:
@@ -25,6 +26,7 @@ def parse_info(info_str: str) -> Dict:
 
 
 def parse_genotype(genotype_str: str, format_fields: List[str]) -> Dict:
+    """Parse VCF genotype string into a dictionary."""
     genotype_dict = {}
     values = genotype_str.split(':')
     for i, field in enumerate(format_fields):
@@ -33,6 +35,7 @@ def parse_genotype(genotype_str: str, format_fields: List[str]) -> Dict:
 
 
 def parse_variant_line(line: str, samples: List[str]) -> Dict:
+    """Parse a single VCF variant line into a dictionary."""
     fields = line.split('\t')
     
     variant = {
@@ -61,6 +64,7 @@ def parse_variant_line(line: str, samples: List[str]) -> Dict:
 
 
 def parse_header(vcf_file: str) -> Tuple[List[str], List[str]]:
+    """Parse VCF file header and extract sample names."""
     header = []
     samples = []
     
@@ -79,6 +83,7 @@ def parse_header(vcf_file: str) -> Tuple[List[str], List[str]]:
 
 
 def parse_variants(vcf_file: str, samples: List[str]) -> Iterator[Dict]:
+    """Parse all variants from a VCF file."""
     with open(vcf_file, 'r') as f:
         # Skip header lines
         for line in f:
@@ -87,6 +92,7 @@ def parse_variants(vcf_file: str, samples: List[str]) -> Iterator[Dict]:
 
 
 def calculate_read_statistics(variant: Dict) -> Dict:
+    """Calculate read statistics from variant INFO field."""
     info = variant['info']
     
     # Extract data from INFO field
@@ -116,6 +122,7 @@ def calculate_read_statistics(variant: Dict) -> Dict:
 
 
 def determine_variant_type(ref: str, alt: str) -> str:
+    """Determine the type of variant based on reference and alternate alleles."""
     ref_len = len(ref)
     alt_len = len(alt)
     
