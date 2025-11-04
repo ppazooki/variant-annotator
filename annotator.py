@@ -3,7 +3,7 @@ import sys
 from typing import Dict, List, Optional
 
 from vcf_parser import parse_header, parse_variants, calculate_read_statistics, determine_variant_type
-from vep_client import get_variant_effects_batch
+from vep_client import get_variant_effects_batch, enrich_with_population_maf
 
 
 FIELDNAMES = [
@@ -12,7 +12,7 @@ FIELDNAMES = [
     'depth', 'variant_reads', 'reference_reads', 
     'variant_percentage', 'reference_percentage', 'allele_frequency',
     'gene_id', 'gene_symbol', 'biotype', 'consequence_terms', 
-    'impact', 'strand', 'maf'
+    'impact', 'strand', 'rsid', 'maf'
 ]
 
 
@@ -41,6 +41,13 @@ def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
         stats = calculate_read_statistics(variant)
         variant_type = determine_variant_type(variant['ref'], variant['alt'])
         
+        # Use VCF ID column as rsID if it starts with 'rs', otherwise use VEP rsID
+        vcf_id = variant['id'] if variant['id'] != '.' else None
+        rsid_from_vep = vep_data.get('rsid', 'N/A')
+        final_rsid = rsid_from_vep
+        if vcf_id and vcf_id.startswith('rs') and rsid_from_vep == 'N/A':
+            final_rsid = vcf_id
+        
         annotation = {
             'chromosome': variant['chrom'],
             'position': variant['pos'],
@@ -51,11 +58,16 @@ def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
             'filter': variant['filter'],
             'variant_type': variant_type,
             **stats,
-            **vep_data
+            **vep_data,
+            'rsid': final_rsid  # Override with VCF ID if available
         }
         annotations.append(annotation)
     
     print(f"Total variants annotated: {len(annotations)}", file=sys.stderr)
+    
+    # Enrich with MAF from Variation API for variants with rsIDs
+    annotations = enrich_with_population_maf(annotations)
+    
     return annotations
 
 
