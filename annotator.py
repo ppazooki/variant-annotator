@@ -7,12 +7,14 @@ from vep_client import get_variant_effects_batch, enrich_with_population_maf
 
 
 FIELDNAMES = [
+    'depth',  # Depth of sequence coverage
+    'variant_reads',  # Number of reads supporting variant
+    'variant_percentage', 'reference_percentage',  # Percentage of reads
+    'gene_id', 'gene_symbol', 'variant_type', 'consequence_terms',  # Gene, type, effect
+    'maf',  # Minor allele frequency
+    # Additional annotations
     'chromosome', 'position', 'variant_id', 'reference', 'alternate',
-    'quality', 'variant_type',
-    'depth', 'variant_reads', 'reference_reads', 
-    'variant_percentage', 'reference_percentage', 'allele_frequency',
-    'gene_id', 'gene_symbol', 'consequence_terms', 
-    'rsid', 'maf'
+    'quality', 'reference_reads', 'allele_frequency', 'rsid'
 ]
 
 

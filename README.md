@@ -54,14 +54,27 @@ python variant_annotator.py data/sample_annotations.vcf --output data/output.tsv
 # Build the Docker image
 make build
 
-# Run annotation (specify full path relative to project root)
+# Run annotation
 make run VCF=data/sample_annotations.vcf OUTPUT=data/output.tsv
 
 # Run with limit
 make run VCF=data/sample_annotations.vcf OUTPUT=data/output.tsv LIMIT=100
+
+# Use default output filename
+make run VCF=data/sample_annotations.vcf
 ```
 
-**Note:** When using `make run`, specify the path to your VCF file relative to the project root. The output file path is also relative to the project root. Complex variants (indels, multi-allelic variants) that cannot be processed by the batch endpoint are automatically retried using individual VEP API calls.
+**Parameters:**
+- `VCF` - Path to input VCF file (relative to project root, required)
+- `OUTPUT` - Path to output TSV file (relative to project root, optional, defaults to `output.tsv`)
+- `LIMIT` - Number of variants to process (optional, for testing)
+
+**Troubleshooting:**
+- **Error: VCF file not specified** - Make sure to include `VCF=path/to/file.vcf` in your command
+- **File not found** - Ensure the VCF file path is relative to the project root directory
+- **Docker not running** - Start Docker Desktop or your Docker daemon before running
+- **Build errors** - Run `make build` first to create the Docker image
+- **Permission errors** - Ensure Docker has access to the project directory
 
 ## Testing
 
@@ -79,6 +92,10 @@ make test
 ## Output
 
 The tool generates a TSV file with the following columns:
-- Variant info: chromosome, position, variant_id, reference, alternate, quality, variant_type
-- Read statistics: depth, variant_reads, reference_reads, variant_percentage, reference_percentage, allele_frequency
-- Annotations: gene_id, gene_symbol, consequence_terms, rsid, maf
+  1. `depth` - Depth of sequence coverage at the site of variation
+  2. `variant_reads` - Number of reads supporting the variant
+  3. `variant_percentage`, `reference_percentage` - Percentage of reads supporting variant vs reference
+  4. `gene_id`, `gene_symbol`, `variant_type`, `consequence_terms` - Gene information and variant effects from Ensembl VEP
+  5. `maf` - Minor allele frequency (if available)
+- **Additional annotations:**
+  - `chromosome`, `position`, `variant_id`, `reference`, `alternate`, `quality`, `reference_reads`, `allele_frequency`, `rsid`

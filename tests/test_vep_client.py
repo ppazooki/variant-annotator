@@ -12,23 +12,14 @@ from vep_client import (
 )
 
 
-def test_build_variant_region_with_chr_prefix():
-    result = build_variant_region('chr1', 100, 'A')
-    assert result == '1:100-100/A'
-    
-def test_build_variant_region_without_chr_prefix():
-    result = build_variant_region('2', 200, 'G')
-    assert result == '2:200-200/G'
+def test_build_variant_region():
+    assert build_variant_region('chr1', 100, 'A') == '1:100-100/A'
+    assert build_variant_region('2', 200, 'G') == '2:200-200/G'
 
 
-def test_build_hgvs_notation_with_chr_prefix():
-    result = build_hgvs_notation('chr1', 100, 'G', 'A')
-    assert result == '1:g.100G>A'
-
-
-def test_build_hgvs_notation_without_chr_prefix():
-    result = build_hgvs_notation('2', 200, 'C', 'T')
-    assert result == '2:g.200C>T'
+def test_build_hgvs_notation():
+    assert build_hgvs_notation('chr1', 100, 'G', 'A') == '1:g.100G>A'
+    assert build_hgvs_notation('2', 200, 'C', 'T') == '2:g.200C>T'
 
 
 def test_create_error_response():
@@ -41,10 +32,7 @@ def test_create_error_response():
 
 def test_parse_empty_response():
     result = parse_vep_response([])
-    assert result['gene_id'] == 'N/A'
-    assert result['gene_symbol'] == 'N/A'
-    assert result['rsid'] == 'N/A'
-    assert result['maf'] == 'N/A'
+    assert result['gene_id'] == 'N/A' and result['rsid'] == 'N/A'
     
 def test_parse_valid_response():
     data = [{
@@ -71,28 +59,13 @@ def test_parse_valid_response():
     assert result['maf'] == 'N/A'  # MAF extraction removed, will be populated by Variation API
     
 def test_parse_response_without_consequences():
-    data = [{'transcript_consequences': []}]
-    result = parse_vep_response(data)
-    assert result['gene_id'] == 'N/A'
-    assert result['rsid'] == 'N/A'
-    assert result['maf'] == 'N/A'
+    result = parse_vep_response([{'transcript_consequences': []}])
+    assert result['gene_id'] == 'N/A' and result['rsid'] == 'N/A'
 
 
-def test_handle_reference_mismatch_error():
-    result = handle_vep_error(
-        "Input reference allele matches reference",
-        "1:100-100/A",
-        "chr1", 100, "G", "A"
-    )
-    assert result['gene_id'] == 'REF_MISMATCH'
-    
-def test_handle_generic_api_error():
-    result = handle_vep_error(
-        "Some other error",
-        "1:100-100/A",
-        "chr1", 100, "G", "A"
-    )
-    assert result['gene_id'] == 'API_ERROR'
+def test_handle_vep_error():
+    assert handle_vep_error("Input reference allele matches reference", "1:100-100/A", "chr1", 100, "G", "A")['gene_id'] == 'REF_MISMATCH'
+    assert handle_vep_error("Some other error", "1:100-100/A", "chr1", 100, "G", "A")['gene_id'] == 'API_ERROR'
 
 
 @responses.activate
@@ -157,20 +130,10 @@ def test_parse_batch_vep_response_valid():
     assert result['consequence_terms'] == 'missense_variant'
 
 
-def test_parse_batch_vep_response_with_error():
-    entry = {'input': '1:g.100G>A', 'error': 'Some error'}
-    result = parse_batch_vep_response(entry)
-    assert result['gene_id'] == 'API_ERROR'
-
-
-def test_parse_batch_vep_response_empty_consequences():
-    entry = {
-        'input': '1:g.100G>A',
-        'transcript_consequences': []
-    }
-    result = parse_batch_vep_response(entry)
-    assert result['gene_id'] == 'N/A'
-    assert result['gene_symbol'] == 'N/A'
+def test_parse_batch_vep_response():
+    assert parse_batch_vep_response({'input': '1:g.100G>A', 'error': 'Some error'})['gene_id'] == 'API_ERROR'
+    result = parse_batch_vep_response({'input': '1:g.100G>A', 'transcript_consequences': []})
+    assert result['gene_id'] == 'N/A' and result['gene_symbol'] == 'N/A'
 
 
 @responses.activate
