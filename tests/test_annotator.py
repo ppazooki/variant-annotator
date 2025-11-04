@@ -36,9 +36,7 @@ def test_annotate_vcf_basic(tmp_path, mocker):
     assert annotations[0]['reference'] == 'A'
     assert annotations[0]['alternate'] == 'T'
     assert annotations[0]['quality'] == '30'
-    assert annotations[0]['filter'] == 'PASS'
     assert annotations[0]['gene_symbol'] == 'TEST'
-    assert annotations[0]['impact'] == 'MODERATE'
 
 
 def test_annotate_vcf_with_limit(tmp_path, mocker):
@@ -98,7 +96,6 @@ def test_annotate_vcf_combines_variant_data(tmp_path, mocker):
     assert annotation['reference'] == 'G'
     assert annotation['alternate'] == 'A'
     assert annotation['quality'] == '25'
-    assert annotation['filter'] == 'PASS'
     # Check variant analysis
     assert annotation['depth'] == 200
     assert annotation['variant_reads'] == 50
@@ -106,7 +103,6 @@ def test_annotate_vcf_combines_variant_data(tmp_path, mocker):
     # Check VEP annotations
     assert annotation['gene_id'] == 'ENSG00000002'
     assert annotation['gene_symbol'] == 'MYGENE'
-    assert annotation['impact'] == 'HIGH'
     assert annotation['consequence_terms'] == 'stop_gained'
 
 
@@ -118,7 +114,6 @@ def test_export_single_annotation(tmp_path):
         'reference': 'A',
         'alternate': 'T',
         'quality': '30',
-        'filter': 'PASS',
         'variant_type': 'SNP (substitution)',
         'depth': 100,
         'variant_reads': 50,
@@ -128,10 +123,7 @@ def test_export_single_annotation(tmp_path):
         'allele_frequency': 0.5,
         'gene_id': 'ENSG00000001',
         'gene_symbol': 'TEST',
-        'biotype': 'protein_coding',
         'consequence_terms': 'missense_variant',
-        'impact': 'MODERATE',
-        'strand': 1,
         'rsid': 'N/A',
         'maf': '0.0123'
     }]

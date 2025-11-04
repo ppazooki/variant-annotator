@@ -7,37 +7,35 @@ BASE_URL = "https://grch37.rest.ensembl.org"
 
 
 def build_variant_region(chrom: str, pos: int, alt: str) -> str:
+    """Build variant region string for VEP region API."""
     formatted_chrom = chrom[3:] if chrom.startswith('chr') else chrom
     return f"{formatted_chrom}:{pos}-{pos}/{alt}"
 
 
 def build_hgvs_notation(chrom: str, pos: int, ref: str, alt: str) -> str:
+    """Build HGVS notation string for VEP batch API."""
     formatted_chrom = chrom[3:] if chrom.startswith('chr') else chrom
     return f"{formatted_chrom}:g.{pos}{ref}>{alt}"
 
 
 def create_error_response(error_type: str = 'API_ERROR') -> Dict:
+    """Create an error response dictionary."""
     return {
         'gene_id': error_type,
         'gene_symbol': error_type,
-        'biotype': error_type,
         'consequence_terms': error_type,
-        'impact': error_type,
-        'strand': error_type,
         'rsid': 'N/A',
         'maf': 'N/A'
     }
 
 
 def parse_vep_response(data: list) -> Dict:
+    """Parse VEP API response into annotation dictionary."""
     if not data:
         return {
             'gene_id': 'N/A',
             'gene_symbol': 'N/A',
-            'biotype': 'N/A',
             'consequence_terms': 'N/A',
-            'impact': 'N/A',
-            'strand': 'N/A',
             'rsid': 'N/A',
             'maf': 'N/A'
         }
@@ -55,10 +53,7 @@ def parse_vep_response(data: list) -> Dict:
         return {
             'gene_id': consequence.get('gene_id', 'N/A'),
             'gene_symbol': consequence.get('gene_symbol', 'N/A'),
-            'biotype': consequence.get('biotype', 'N/A'),
             'consequence_terms': ', '.join(consequence.get('consequence_terms', [])),
-            'impact': consequence.get('impact', 'N/A'),
-            'strand': consequence.get('strand', 'N/A'),
             'rsid': rsid,
             'maf': 'N/A'  # MAF will be populated by Variation API
         }
@@ -66,16 +61,14 @@ def parse_vep_response(data: list) -> Dict:
     return {
         'gene_id': 'N/A',
         'gene_symbol': 'N/A',
-        'biotype': 'N/A',
         'consequence_terms': 'N/A',
-        'impact': 'N/A',
-        'strand': 'N/A',
         'rsid': rsid,
         'maf': 'N/A'  # MAF will be populated by Variation API
     }
 
 
 def handle_vep_error(error_msg: str, variant_region: str, chrom: str, pos: int, ref: str, alt: str) -> Dict:
+    """Handle VEP API error messages and return appropriate error response."""
     if "matches reference" in error_msg:
         print(f"Warning: Reference mismatch for {chrom}:{pos} ref={ref} alt={alt}: {error_msg}", file=sys.stderr)
         return create_error_response('REF_MISMATCH')
@@ -91,6 +84,7 @@ def get_variant_effects(
     alt: str,
     species: str = "human"
 ) -> Dict:
+    """Get variant effects for a single variant using VEP region API."""
     variant_region = build_variant_region(chrom, pos, alt)
     endpoint = f"{BASE_URL}/vep/{species}/region/{variant_region}"
     params = {
@@ -119,6 +113,7 @@ def get_variant_effects_batch(
     species: str = "human",
     batch_size: int = 200
 ) -> List[Dict]:
+    """Get variant effects for multiple variants using VEP batch API."""
     total = len(variants)
     if total == 0:
         return []
@@ -202,6 +197,7 @@ def get_variant_effects_batch(
 
 
 def parse_batch_vep_response(entry: dict) -> Dict:
+    """Parse a single entry from VEP batch API response."""
     if "error" in entry:
         return create_error_response('API_ERROR')
     
@@ -218,10 +214,7 @@ def parse_batch_vep_response(entry: dict) -> Dict:
         return {
             'gene_id': consequence.get('gene_id', 'N/A'),
             'gene_symbol': consequence.get('gene_symbol', 'N/A'),
-            'biotype': consequence.get('biotype', 'N/A'),
             'consequence_terms': ', '.join(consequence.get('consequence_terms', [])),
-            'impact': consequence.get('impact', 'N/A'),
-            'strand': consequence.get('strand', 'N/A'),
             'rsid': rsid,
             'maf': 'N/A'  # MAF will be populated by Variation API
         }
@@ -229,16 +222,14 @@ def parse_batch_vep_response(entry: dict) -> Dict:
     return {
         'gene_id': 'N/A',
         'gene_symbol': 'N/A',
-        'biotype': 'N/A',
         'consequence_terms': 'N/A',
-        'impact': 'N/A',
-        'strand': 'N/A',
         'rsid': rsid,
         'maf': 'N/A'  # MAF will be populated by Variation API
     }
 
 
 def fetch_maf_from_variation_api(rsid: str) -> str:
+    """Fetch Minor Allele Frequency (MAF) from Ensembl Variation API."""
     if rsid == 'N/A' or not rsid.startswith('rs'):
         return 'N/A'
     
@@ -269,6 +260,7 @@ def fetch_maf_from_variation_api(rsid: str) -> str:
 
 
 def enrich_with_population_maf(annotations: List[Dict]) -> List[Dict]:
+    """Enrich annotations with MAF data from Ensembl Variation API."""
     variants_with_rsid = [(i, ann) for i, ann in enumerate(annotations) 
                           if ann.get('rsid') and ann.get('rsid') != 'N/A']
     

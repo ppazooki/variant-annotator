@@ -8,15 +8,16 @@ from vep_client import get_variant_effects_batch, enrich_with_population_maf
 
 FIELDNAMES = [
     'chromosome', 'position', 'variant_id', 'reference', 'alternate',
-    'quality', 'filter', 'variant_type',
+    'quality', 'variant_type',
     'depth', 'variant_reads', 'reference_reads', 
     'variant_percentage', 'reference_percentage', 'allele_frequency',
-    'gene_id', 'gene_symbol', 'biotype', 'consequence_terms', 
-    'impact', 'strand', 'rsid', 'maf'
+    'gene_id', 'gene_symbol', 'consequence_terms', 
+    'rsid', 'maf'
 ]
 
 
 def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
+    """Annotate variants from a VCF file using Ensembl VEP API."""
     # Parse header to get samples
     _, samples = parse_header(vcf_file)
     
@@ -55,12 +56,16 @@ def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
             'reference': variant['ref'],
             'alternate': variant['alt'],
             'quality': variant['qual'],
-            'filter': variant['filter'],
             'variant_type': variant_type,
             **stats,
             **vep_data,
             'rsid': final_rsid  # Override with VCF ID if available
         }
+        # Remove fields we don't want in output
+        annotation.pop('filter', None)
+        annotation.pop('biotype', None)
+        annotation.pop('impact', None)
+        annotation.pop('strand', None)
         annotations.append(annotation)
     
     print(f"Total variants annotated: {len(annotations)}", file=sys.stderr)
@@ -72,6 +77,7 @@ def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
 
 
 def export_to_tsv(annotations: List[Dict], output_file: str) -> None:
+    """Export annotations to a TSV file."""
     if not annotations:
         print("No annotations to export", file=sys.stderr)
         return

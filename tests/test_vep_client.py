@@ -154,7 +154,7 @@ def test_parse_batch_vep_response_valid():
     result = parse_batch_vep_response(entry)
     assert result['gene_id'] == 'ENSG00000001'
     assert result['gene_symbol'] == 'TEST'
-    assert result['impact'] == 'MODERATE'
+    assert result['consequence_terms'] == 'missense_variant'
 
 
 def test_parse_batch_vep_response_with_error():
