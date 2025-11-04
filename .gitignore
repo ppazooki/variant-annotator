@@ -5,7 +5,3 @@ venv/
 .coverage
 htmlcov/
 coverage.xml
-.vscode/
-.idea/
-.DS_Store
-
