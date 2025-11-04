@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 
-from annotator import annotate_vcf
-from exporter import export_to_tsv
+from annotator import annotate_vcf, export_to_tsv
 
 
 def main():

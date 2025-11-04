@@ -1,9 +1,19 @@
+import csv
 import sys
 from typing import Dict, List, Optional
 
-from vcf_parser import parse_header, parse_variants
+from vcf_parser import parse_header, parse_variants, calculate_read_statistics, determine_variant_type
 from vep_client import get_variant_effects_batch
-from variant_analysis import calculate_read_statistics, determine_variant_type
+
+
+FIELDNAMES = [
+    'chromosome', 'position', 'variant_id', 'reference', 'alternate',
+    'quality', 'filter', 'variant_type',
+    'depth', 'variant_reads', 'reference_reads', 
+    'variant_percentage', 'reference_percentage', 'allele_frequency',
+    'gene_id', 'gene_symbol', 'biotype', 'consequence_terms', 
+    'impact', 'strand', 'maf'
+]
 
 
 def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
@@ -47,4 +57,17 @@ def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
     
     print(f"Total variants annotated: {len(annotations)}", file=sys.stderr)
     return annotations
+
+
+def export_to_tsv(annotations: List[Dict], output_file: str) -> None:
+    if not annotations:
+        print("No annotations to export", file=sys.stderr)
+        return
+    
+    with open(output_file, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES, delimiter='\t')
+        writer.writeheader()
+        writer.writerows(annotations)
+    
+    print(f"Annotations exported to {output_file}", file=sys.stderr)
 
