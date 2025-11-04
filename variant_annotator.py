@@ -16,8 +16,8 @@ def main():
     )
     parser.add_argument(
         '--output',
-        default='annotations.tsv',
-        help='Output TSV file path (default: annotations.tsv)'
+        default='output.tsv',
+        help='Output TSV file path (default: output.tsv)'
     )
     parser.add_argument(
         '--limit',
