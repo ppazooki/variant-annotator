@@ -46,7 +46,7 @@ python variant_annotator.py input.vcf [--output output.tsv] [--limit N]
 
 **Example:**
 ```bash
-python variant_annotator.py data/sample_annotations.vcf --output data/output.tsv
+python variant_annotator.py data/input.vcf --output data/output.tsv
 ```
 
 ### Using Make (Docker):
@@ -55,13 +55,13 @@ python variant_annotator.py data/sample_annotations.vcf --output data/output.tsv
 make build
 
 # Run annotation
-make run VCF=data/sample_annotations.vcf OUTPUT=data/output.tsv
+make run VCF=data/input.vcf OUTPUT=data/output.tsv
 
 # Run with limit
-make run VCF=data/sample_annotations.vcf OUTPUT=data/output.tsv LIMIT=100
+make run VCF=data/input.vcf OUTPUT=data/output.tsv LIMIT=100
 
 # Use default output filename
-make run VCF=data/sample_annotations.vcf
+make run VCF=data/input.vcf
 ```
 
 **Parameters:**

@@ -79,12 +79,11 @@ def get_variant_effects(
     chrom: str,
     pos: int,
     ref: str,
-    alt: str,
-    species: str = "human"
+    alt: str
 ) -> Dict:
     """Get variant effects for a single variant using VEP region API."""
     variant_region = build_variant_region(chrom, pos, alt)
-    endpoint = f"{BASE_URL}/vep/{species}/region/{variant_region}"
+    endpoint = f"{BASE_URL}/vep/human/region/{variant_region}"
     params = {
         "content-type": "application/json",
         "assembly": "GRCh37"
@@ -107,7 +106,6 @@ def get_variant_effects(
 
 def get_variant_effects_batch(
     variants: List[Tuple[str, int, str, str]],
-    species: str = "human",
     batch_size: int = 200
 ) -> List[Dict]:
     """Get variant effects for multiple variants using VEP batch API."""
@@ -133,7 +131,7 @@ def get_variant_effects_batch(
         batch_hgvs = hgvs_list[batch_num:batch_num + batch_size]
         batch_idx = batch_num // batch_size + 1
         
-        endpoint = f"{BASE_URL}/vep/{species}/hgvs"
+        endpoint = f"{BASE_URL}/vep/human/hgvs"
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         data = {"hgvs_notations": batch_hgvs}
         
@@ -178,7 +176,7 @@ def get_variant_effects_batch(
             if failed_variants:
                 print(f"  Falling back to individual calls for {len(failed_variants)} failed variants...", file=sys.stderr)
                 for variant_idx, chrom, pos, ref, alt in failed_variants:
-                    individual_result = get_variant_effects(chrom, pos, ref, alt, species)
+                    individual_result = get_variant_effects(chrom, pos, ref, alt)
                     all_results[variant_idx] = individual_result
             
             print(f"Batch {batch_idx}/{total_batches} completed", file=sys.stderr)
@@ -238,7 +236,6 @@ def fetch_maf_from_variation_api(rsid: str) -> str:
         response.raise_for_status()
         data = response.json()
         
-        # Look for MAF directly in response (simpler approach from reference implementation)
         if 'MAF' in data and data['MAF'] is not None:
             return f"{float(data['MAF']):.4f}"
         
