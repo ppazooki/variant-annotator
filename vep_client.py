@@ -70,10 +70,8 @@ def parse_vep_response(data: list) -> Dict:
 def handle_vep_error(error_msg: str, variant_region: str, chrom: str, pos: int, ref: str, alt: str) -> Dict:
     """Handle VEP API error messages and return appropriate error response."""
     if "matches reference" in error_msg:
-        print(f"Warning: Reference mismatch for {chrom}:{pos} ref={ref} alt={alt}: {error_msg}", file=sys.stderr)
         return create_error_response('REF_MISMATCH')
     else:
-        print(f"Warning: VEP API error for {variant_region}: {error_msg}", file=sys.stderr)
         return create_error_response('API_ERROR')
 
 
@@ -104,7 +102,6 @@ def get_variant_effects(
         return parse_vep_response(data)
         
     except requests.exceptions.RequestException as e:
-        print(f"Warning: VEP API request failed for {variant_region}: {e}", file=sys.stderr)
         return create_error_response('API_ERROR')
 
 
@@ -248,7 +245,6 @@ def fetch_maf_from_variation_api(rsid: str) -> str:
         return 'N/A'
         
     except Exception as e:
-        print(f"Warning: Failed to fetch MAF for {rsid}: {e}", file=sys.stderr)
         return 'N/A'
 
 
@@ -272,7 +268,5 @@ def enrich_with_population_maf(annotations: List[Dict]) -> List[Dict]:
         
         if maf != 'N/A':
             annotations[ann_idx]['maf'] = maf
-            if (idx + 1) % 10 == 0:
-                print(f"  Processed {idx + 1}/{len(variants_with_rsid)} variants...")
         
     return annotations
