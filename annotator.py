@@ -61,7 +61,7 @@ def annotate_vcf(vcf_file: str, limit: Optional[int] = None) -> List[Dict]:
             'variant_type': variant_type,
             **stats,
             **vep_data,
-            'rsid': final_rsid  # Override with VCF ID if available
+            'rsid': final_rsid
         }
         # Remove fields we don't want in output
         annotation.pop('filter', None)
