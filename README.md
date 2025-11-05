@@ -99,3 +99,11 @@ The tool generates a TSV file with the following columns:
   5. `maf` - Minor allele frequency (if available)
 - **Additional annotations:**
   - `chromosome`, `position`, `variant_id`, `reference`, `alternate`, `quality`, `reference_reads`, `allele_frequency`, `rsid`
+
+## Potential Improvements for Scaling
+
+For production use with large-scale variant annotation, consider the following improvements:
+
+- **Parallel Batch Processing**: Process multiple batches concurrently using `ThreadPoolExecutor` or `asyncio` to reduce total runtime.
+- **Rate Limiting**: Respect Ensembl API rate limits (15 requests/second, 54,000/hour) with intelligent throttling. This is especially important for the Variation API which is called sequentially for each variant with an rsID.
+- **Batch Size Tuning**: Make batch size configurable and optimize based on API response times (current: 200 variants per batch).
