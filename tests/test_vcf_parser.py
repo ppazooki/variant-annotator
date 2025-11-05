@@ -1,6 +1,5 @@
 from vcf_parser import (
     parse_info,
-    parse_genotype,
     parse_variant_line,
     parse_header,
     parse_variants,
@@ -18,14 +17,6 @@ def test_parse_info():
     assert parse_info('GENE=BRCA2;DP=100')['GENE'] == 'BRCA2'
 
 
-def test_parse_genotype():
-    result = parse_genotype('0/1:30:99', ['GT', 'DP', 'GQ'])
-    assert result['GT'] == '0/1' and result['DP'] == '30' and result['GQ'] == '99'
-    assert parse_genotype('1/1', ['GT'])['GT'] == '1/1'
-    result = parse_genotype('./.:.', ['GT', 'DP'])
-    assert result['GT'] == './.' and result['DP'] == '.'
-
-
 def test_parse_variant_line_basic():
     line = 'chr1\t100\trs123\tA\tT\t30\tPASS\tDP=100;AF=0.5'
     samples = []
@@ -38,14 +29,6 @@ def test_parse_variant_line_basic():
     assert result['qual'] == '30'
     assert result['filter'] == 'PASS'
     assert result['info']['DP'] == 100
-
-
-def test_parse_variant_line_with_samples():
-    line = 'chr1\t100\trs123\tA\tT\t30\tPASS\tDP=100\tGT:DP\t0/1:30\t1/1:40'
-    samples = ['Sample1', 'Sample2']
-    result = parse_variant_line(line, samples)
-    assert result['genotypes']['Sample1']['GT'] == '0/1'
-    assert result['genotypes']['Sample2']['GT'] == '1/1'
 
 
 def test_parse_variant_line_no_id():
@@ -115,21 +98,6 @@ def test_parse_multiple_variants(tmp_path):
     assert variants[0]['id'] == 'rs1'
     assert variants[1]['info']['DP'] == 200
     assert variants[2]['chrom'] == 'chr2'
-
-
-def test_parse_variants_with_samples(tmp_path):
-    vcf_file = tmp_path / "test.vcf"
-    vcf_file.write_text(
-        '##fileformat=VCFv4.2\n'
-        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSample1\n'
-        'chr1\t100\trs1\tA\tT\t30\tPASS\tDP=100\tGT:DP\t0/1:30\n'
-    )
-    
-    _, samples = parse_header(str(vcf_file))
-    variants = list(parse_variants(str(vcf_file), samples))
-    
-    assert len(variants) == 1
-    assert variants[0]['genotypes']['Sample1']['GT'] == '0/1'
 
 
 def test_parse_no_variants(tmp_path):

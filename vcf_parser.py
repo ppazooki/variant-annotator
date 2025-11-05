@@ -25,15 +25,6 @@ def parse_info(info_str: str) -> Dict:
     return info_dict
 
 
-def parse_genotype(genotype_str: str, format_fields: List[str]) -> Dict:
-    """Parse VCF genotype string into a dictionary."""
-    genotype_dict = {}
-    values = genotype_str.split(':')
-    for i, field in enumerate(format_fields):
-        genotype_dict[field] = values[i] if i < len(values) else ''
-    return genotype_dict
-
-
 def parse_variant_line(line: str, samples: List[str]) -> Dict:
     """Parse a single VCF variant line into a dictionary."""
     fields = line.split('\t')
@@ -46,19 +37,8 @@ def parse_variant_line(line: str, samples: List[str]) -> Dict:
         'alt': fields[4],
         'qual': fields[5],
         'filter': fields[6],
-        'info': parse_info(fields[7]),
-        'format': fields[8] if len(fields) > 8 else '',
-        'genotypes': {}
+        'info': parse_info(fields[7])
     }
-    
-    # Parse sample genotype data if available
-    if len(fields) > 9 and samples:
-        format_fields = variant['format'].split(':')
-        for i, sample in enumerate(samples):
-            sample_data = fields[9 + i] if len(fields) > 9 + i else ''
-            variant['genotypes'][sample] = parse_genotype(
-                sample_data, format_fields
-            )
     
     return variant
 
